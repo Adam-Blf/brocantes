@@ -1,5 +1,63 @@
 # Journal des versions
 
+## 0.2.0 - 11/09/2026
+
+Comble l'ecart entre ce que la collecte rendait et ce qui existe reellement.
+
+### Ajoute
+
+- Famille de collecteurs `html`, pour les douze communes qui publient une
+  brocante sans exposer de flux. Elle ne parse aucune structure de page : elle
+  releve les liens, filtre sur le texte, et lit la date sur la fiche.
+- `--famille=<nom>` sur l'orchestrateur, pour rejouer tous les collecteurs
+  d'une meme famille apres une correction dans un module partage.
+- Extraction des horaires ecrits en francais, et de la forme a deux points
+  "8:00 / 18:00".
+- Garde sur les dates deja passees : un evenement termine est ecarte ET
+  journalise, parce que sur une page HTML c'est presque toujours le signe d'une
+  date parasite captee a la place de la bonne.
+
+### Mesure
+
+- 33 sources branchees, 28 communes couvertes, **18 evenements publies**,
+  contre 11 en 0.1.0.
+- 13 evenements portent une adresse geocodee, 5 sont places au centre de leur
+  commune faute d'adresse publiee.
+
+### Corrige
+
+- **Horaires inventes.** Sans horaire lisible, le collecteur posait 8h-20h par
+  defaut. Une braderie annoncee de 10h a 17h s'affichait de 8h a 20h, ce qui
+  denature l'information au sens de l'article L322-1 du CRPA. En l'absence
+  d'horaire, on retient desormais la journee entiere, visiblement approximative
+  donc honnete.
+- **"18h 47eme Brocante de Sucy" lu comme 18h47.** Le numero d'edition etait
+  capte comme des minutes. Les minutes doivent maintenant etre bornees a 59 et
+  ne pas etre suivies d'une lettre.
+- **Les heures de "Que faire a Paris" sont fausses dans les champs
+  structures.** Pour un evenement dont `date_description` annonce "de 09h00 a
+  19h00", `date_start` vaut `10:00:00+00:00`, soit midi a Paris. Le champ qui a
+  l'air exploitable ne l'est pas, le texte a cote est juste. On garde le jour du
+  champ structure et l'heure du texte.
+- Adresses tronquees au premier signe qui n'en fait plus partie : on recuperait
+  "place Charles Digeon et dans le Val de Gaulle ! En savoir", ce qui faisait
+  echouer le geocodage au lieu de l'aider. Ormesson est passe d'un score de
+  0,46 a 0,97.
+- Contenu des balises script et style retire avant lecture : du JavaScript de
+  partage social atterrissait dans une description.
+- Fil d'ariane retire en coupant a la derniere occurrence du titre.
+
+### Limites connues
+
+- Trois descriptions sur sept gardent un residu de navigation. Cosmetique : les
+  donnees factuelles, date, horaire et lieu, sont justes, et chaque fiche
+  pointe vers la source officielle.
+- Cinq communes restent a zero malgre une brocante reperee a l'audit :
+  Limeil-Brevannes annonce une ouverture d'inscriptions et non la brocante,
+  Villiers-sur-Marne la cite sans date, Maisons-Alfort rend une page sans aucun
+  lien exploitable, Ablon et Charenton n'exposent pas la fiche sur la page
+  sondee.
+
 ## 0.1.0 - 11/09/2026
 
 Jalon 1 : la chaine de collecte, branchee sur du reel.

@@ -13,6 +13,7 @@
 
 import { obtenir } from "../lib/http.ts";
 import { classer } from "../lib/classer.ts";
+import { horairesDuTexte } from "../lib/dates.ts";
 import type { EvenementBrut, ResultatCollecte, Source } from "../lib/types.ts";
 
 interface EnrParis {
@@ -20,6 +21,7 @@ interface EnrParis {
   title?: string;
   date_start?: string;
   date_end?: string;
+  date_description?: string;
   address_name?: string;
   address_street?: string;
   address_zipcode?: string;
@@ -51,8 +53,8 @@ export async function collecter(source: Source): Promise<ResultatCollecte> {
     url.searchParams.set("limit", "100");
     url.searchParams.set(
       "select",
-      "title,date_start,date_end,address_name,address_street,address_zipcode," +
-        "address_city,lead_text,url",
+      "title,date_start,date_end,date_description,address_name,address_street," +
+        "address_zipcode,address_city,lead_text,url",
     );
 
     const r = await obtenir(url.toString());
@@ -76,9 +78,36 @@ export async function collecter(source: Source): Promise<ResultatCollecte> {
       // tranche, et ce qu'il refuse reste dehors.
       if (!classer(titre, e.lead_text ?? "").type) continue;
 
-      const debut = new Date(e.date_start);
-      const fin = new Date(e.date_end ?? e.date_start);
+      let debut = new Date(e.date_start);
+      let fin = new Date(e.date_end ?? e.date_start);
       if (isNaN(debut.getTime())) continue;
+
+      // Piege verifie le 11/09/2026 : les champs date_start et date_end sont
+      // suffixes +00:00 mais ne portent pas l'heure reelle. Pour un evenement
+      // dont date_description annonce "de 09h00 a 19h00", date_start vaut
+      // 10:00:00+00:00, soit midi a Paris. Le champ structure a donc l'air
+      // exploitable et ne l'est pas, alors que le texte a cote est juste.
+      // On garde le JOUR du champ structure, plus fiable, et l'HEURE du texte.
+      const h = horairesDuTexte(e.date_description ?? "");
+      if (h) {
+        const poserHeure = (base: Date, heure: number) => {
+          const j = base.toISOString().slice(0, 10);
+          const hh = String(Math.floor(heure)).padStart(2, "0");
+          const mm = String(Math.round((heure % 1) * 60)).padStart(2, "0");
+          const decalage = new Intl.DateTimeFormat("en-US", {
+            timeZone: "Europe/Paris",
+            timeZoneName: "longOffset",
+          })
+            .formatToParts(base)
+            .find((p) => p.type === "timeZoneName")?.value
+            ?.replace("GMT", "") ?? "+01:00";
+          return new Date(`${j}T${hh}:${mm}:00${decalage}`);
+        };
+        const d2 = poserHeure(debut, h.debut);
+        const f2 = poserHeure(isNaN(fin.getTime()) ? debut : fin, h.fin);
+        if (!isNaN(d2.getTime())) debut = d2;
+        if (!isNaN(f2.getTime())) fin = f2;
+      }
 
       evenements.push({
         idExterne: e.url ?? titre,

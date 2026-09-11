@@ -17,6 +17,7 @@ import { collecter as collecterTribe } from "./familles/tribe.ts";
 import { collecter as collecterRss } from "./familles/rss.ts";
 import { collecter as collecterParis } from "./familles/paris.ts";
 import { collecter as collecterIcsWp } from "./familles/ics-wp.ts";
+import { collecter as collecterHtml } from "./familles/html.ts";
 import type { ResultatCollecte, Source } from "./lib/types.ts";
 
 const FICHIER_SOURCES = new URL("./sources.json", import.meta.url);
@@ -27,6 +28,7 @@ const COLLECTEURS = {
   rss: collecterRss,
   "opendata-paris": collecterParis,
   "ics-wp": collecterIcsWp,
+  html: collecterHtml,
 } as const;
 
 interface Journal {
@@ -39,6 +41,7 @@ interface Journal {
     retenus: number;
     inchange?: boolean;
     erreur?: string;
+    datesPassees?: string[];
   }>;
   evenements: Array<Record<string, unknown>>;
 }
@@ -72,11 +75,20 @@ async function principal() {
   const filtre = Deno.args
     .find((a) => a.startsWith("--source="))
     ?.slice("--source=".length);
+  // --famille=html rejoue tous les collecteurs d'une meme famille, ce qui sert
+  // apres une correction dans un module partage : sans cela il faudrait douze
+  // rejeux separes ou une passe complete qui sollicite vingt sites pour rien.
+  const famille = Deno.args
+    .find((a) => a.startsWith("--famille="))
+    ?.slice("--famille=".length);
   const actives = config.sources.filter(
-    (s) => s.actif && (!filtre || s.slug === filtre),
+    (s) =>
+      s.actif &&
+      (!filtre || s.slug === filtre) &&
+      (!famille || s.famille === famille),
   );
-  if (filtre && actives.length === 0) {
-    console.error(`Aucune source active nommee "${filtre}".`);
+  if ((filtre || famille) && actives.length === 0) {
+    console.error(`Aucune source active pour ${filtre ?? famille}.`);
     Deno.exit(2);
   }
 
@@ -86,8 +98,9 @@ async function principal() {
   // fichier le plus recent du dossier et usurpe le rang de derniere passe
   // complete : tout ce qui lit "la derniere collecte" y trouverait une source
   // unique au lieu des vingt et une.
-  const nom = filtre
-    ? `partielle-${filtre}-${horodate}.json`
+  const etiquette = filtre ?? (famille ? `famille-${famille}` : null);
+  const nom = etiquette
+    ? `partielle-${etiquette}-${horodate}.json`
     : `collecte-${horodate}.json`;
   const chemin = new URL(`./${nom}`, DOSSIER_SORTIE);
 
@@ -115,6 +128,18 @@ async function principal() {
     }
 
     const r = await collecteur(source);
+
+    // Un evenement deja termine n'est pas seulement inutile, c'est un signal :
+    // sur une page HTML, il veut presque toujours dire que l'extracteur a
+    // attrape une date parasite plutot que celle de l'evenement. Le laisser
+    // passer donnerait une fiche qui a l'air juste et qui ment.
+    const hier = new Date(Date.now() - 24 * 3600 * 1000);
+    const passes = r.evenements.filter((e) => e.finLe < hier);
+    if (passes.length > 0) {
+      r.evenements = r.evenements.filter((e) => e.finLe >= hier);
+      r.datesPassees = passes.map((e) => `${e.titreSource} (${e.debutLe.toISOString().slice(0, 10)})`);
+    }
+
     journal.sources.push({
       slug: source.slug,
       commune: source.commune,
@@ -123,6 +148,7 @@ async function principal() {
       retenus: r.evenements.length,
       inchange: r.inchange,
       erreur: r.erreur,
+      datesPassees: r.datesPassees,
     });
     journal.evenements.push(...aplatir(r));
 
@@ -132,6 +158,12 @@ async function principal() {
       ? "inchange depuis la derniere passe"
       : `${r.evenements.length} retenu(s) sur ${r.vues} vu(s)`;
     console.log(`  ${r.erreur ? "!" : " "}  ${source.commune.padEnd(22)} ${etat}`);
+    if (r.datesPassees?.length) {
+      console.log(
+        `        ${r.datesPassees.length} ecarte(s), date deja passee : ` +
+          r.datesPassees.join(", "),
+      );
+    }
 
     // Ecriture au fil de l'eau : si la passe s'interrompt, ce qui a ete
     // collecte jusque la est deja sur le disque.

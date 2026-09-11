@@ -42,7 +42,7 @@ export interface EvenementBrut {
 export interface Source {
   slug: string;
   nom: string;
-  famille: "tribe" | "rss" | "opendata-paris" | "ics-wp";
+  famille: "tribe" | "rss" | "opendata-paris" | "ics-wp" | "html";
   url: string;
   codeInsee: string;
   commune: string;
@@ -60,4 +60,10 @@ export interface ResultatCollecte {
   erreur?: string;
   /** Vrai si la source a repondu 304, donc rien n'a change depuis la veille. */
   inchange?: boolean;
+  /**
+   * Evenements ecartes parce que deja termines. Sur une page HTML c'est presque
+   * toujours le signe d'une date parasite captee a la place de la bonne, donc
+   * ils sont journalises plutot que silencieusement jetes.
+   */
+  datesPassees?: string[];
 }

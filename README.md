@@ -5,8 +5,8 @@ a Paris. Une seule question, une reponse en moins de cinq secondes : qu'est-ce
 qu'il y a ce week-end a moins de vingt kilometres, et comment j'y vais.
 
 Etat au 11/09/2026 : jalon 1 livre, la chaine de collecte tourne et ecrit du
-reel. **11 evenements en base**, issus de 4 sources, sur 21 communes sondees.
-L'interface n'existe pas encore.
+reel. **18 evenements publies**, issus de 11 sources, sur 33 sources branchees
+et 28 communes couvertes. L'interface n'existe pas encore.
 
 ## Ce qu'il faut savoir avant de lire le code
 
@@ -36,17 +36,18 @@ releve.
 
 ```mermaid
 flowchart LR
-  subgraph sources["Sources, 21 communes sondees"]
+  subgraph sources["Sources, 33 branchees, 28 communes couvertes"]
     T["API The Events Calendar<br/>3 communes"]
     R["Flux RSS d agenda<br/>16 communes"]
     I["Export iCalendar par fiche<br/>Chevilly-Larue"]
+    HT["Lecture des liens, sans structure<br/>12 communes sans flux"]
     P["Que faire a Paris<br/>ODbL"]
   end
 
   subgraph collecte["collector, Deno"]
     H["lib/http<br/>1 requete a la fois par domaine<br/>3 s d ecart, ETag"]
     C["lib/classer<br/>garde ce qui est une brocante"]
-    D["lib/dates<br/>5 formats de date en cascade"]
+    D["lib/dates<br/>5 formats de date en cascade<br/>horaires lus, jamais inventes"]
     O["collecte.ts<br/>ecrit un instantane JSON"]
     L["charger.ts<br/>ecrit en base, en brouillon"]
   end
@@ -60,7 +61,7 @@ flowchart LR
 
   W["app, Next.js<br/>a venir"]
 
-  T & R & I & P --> H --> C --> D --> O --> L --> E
+  T & R & I & HT & P --> H --> C --> D --> O --> L --> E
   L --> ES
   E -.->|"recherche_evenements<br/>ST_DWithin sur index GiST"| W
   S & CO --> W
@@ -77,7 +78,17 @@ d'ecriture, ce qui la rend rejouable sans secret.
 | `tribe` | Valenton, La Queue-en-Brie, Noiseau | API JSON du plugin The Events Calendar. La source la plus propre : dates structurees, adresse, code postal. |
 | `rss` | 16 communes du 94 | Flux RSS. Cinq encodages de date differents, d'ou la cascade de `lib/dates.ts`. |
 | `ics-wp` | Chevilly-Larue | Pas de flux global, mais un export iCalendar par fiche. |
+| `html` | 12 communes du 94 | Ni flux ni API, et c'est justement la que sont les brocantes. Lecture des liens de la page agenda, sans supposer aucune structure de site. |
 | `opendata-paris` | Paris | Jeu "Que faire a Paris", ODbL, mis a jour quotidiennement. |
+
+### Pourquoi la famille `html` ne parse aucune structure
+
+Les douze communes concernees tournent sur cinq moteurs differents, WordPress,
+TYPO3, Drupal, Joomla et un CMS proprietaire. Un parseur par structure de page
+serait douze fois du code casse au premier changement de theme. Le collecteur
+releve donc les liens de la page, garde ceux dont le texte evoque une brocante,
+et va lire la date sur la fiche. Un site peut changer entierement d'apparence
+sans rien casser, tant qu'il continue de nommer ses evenements en francais.
 
 ## Installation
 
