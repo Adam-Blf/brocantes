@@ -1,0 +1,18 @@
+node_modules/
+.next/
+.vercel/
+.env
+.env.local
+.env*.local
+
+# Sorties de collecte : ce sont des instantanes horodates, pas du code. Elles se
+# regenerent, et les versionner ferait grossir le depot d'un fichier par jour.
+collector/sortie/*.json
+!collector/sortie/.gitkeep
+
+# Copies de travail du referentiel, retelechargeables en une commande.
+collector/data/*.json
+
+*.log
+.DS_Store
+Thumbs.db
