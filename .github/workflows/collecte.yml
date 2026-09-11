@@ -1,0 +1,80 @@
+name: Collecte quotidienne
+
+# Une passe par jour, jamais plus. Elle tourne tot le matin : les mairies
+# publient en journee, et un passage nocturne evite de consommer leur bande
+# passante aux heures ou des habitants consultent le site.
+on:
+  schedule:
+    - cron: "15 5 * * *"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Rejouer une seule source, par son slug"
+        required: false
+
+jobs:
+  collecte:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Verification des types
+        run: deno check collector/collecte.ts collector/charger.ts tests/rls.ts
+
+      # Les domaines sont lus dans sources.json plutot qu'ecrits ici : une
+      # source ajoutee au fichier devient joignable sans toucher au workflow,
+      # et surtout un domaine qui n'y figure pas reste inaccessible. C'est tout
+      # l'interet des permissions de Deno, et ca a deja servi : deux mairies
+      # redirigent vers leur domaine sans www, ce qui a ete refuse et vu.
+      - name: Liste des domaines autorises
+        id: domaines
+        run: |
+          liste=$(deno eval '
+            const c = JSON.parse(Deno.readTextFileSync("collector/sources.json"));
+            const h = new Set();
+            for (const s of c.sources) {
+              if (!s.actif) continue;
+              const n = new URL(s.url).hostname;
+              h.add(n);
+              h.add(n.replace(/^www\./, ""));
+            }
+            console.log([...h].join(","));
+          ')
+          echo "liste=$liste" >> "$GITHUB_OUTPUT"
+
+      - name: Collecte
+        run: |
+          deno run \
+            --allow-net="${{ steps.domaines.outputs.liste }}" \
+            --allow-read --allow-write \
+            collector/collecte.ts ${{ inputs.source && format('--source={0}', inputs.source) || '' }}
+
+      - name: Chargement en base
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          dernier=$(ls -t collector/sortie/collecte-*.json | head -1)
+          deno run --allow-net --allow-env --allow-read collector/charger.ts "$dernier"
+
+      - name: Garde RLS
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: deno run --allow-net --allow-env tests/rls.ts
+
+      # La sortie est conservee quinze jours. Quand une mairie demande sur quoi
+      # on s'est fonde, on repond par l'instantane de son propre flux, date,
+      # plutot que par un raisonnement.
+      - name: Conserver la trace de la passe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collecte-${{ github.run_number }}
+          path: collector/sortie/*.json
+          retention-days: 15
