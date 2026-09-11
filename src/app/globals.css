@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* Polices rapatriees en local, jamais de CDN a l'execution. Ce sont des
+   polices variables : un fichier couvre toutes les graisses. */
+@font-face {
+  font-family: "Newsreader";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/polices/newsreader-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Newsreader";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/polices/newsreader-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/polices/schibsted-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/polices/schibsted-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Registre : journal de petites annonces. Papier casse, encre presque noire,
+   un rouge de tampon encreur, des filets fins. Aucun degrade, aucune ombre
+   portee : un journal n'en a pas. */
+@theme {
+  --font-titre: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-corps: "Schibsted Grotesk", system-ui, sans-serif;
+
+  --color-papier: #f4f1ea;
+  --color-papier-creux: #eae5da;
+  --color-encre: #1a1815;
+  --color-encre-pale: #56504a;
+  --color-filet: #cec7b8;
+  --color-tampon: #9e2b16;
+  --color-tampon-pale: #f0e2de;
+}
+
+:root {
+  --papier: var(--color-papier);
+  --papier-creux: var(--color-papier-creux);
+  --encre: var(--color-encre);
+  --encre-pale: var(--color-encre-pale);
+  --filet: var(--color-filet);
+  --tampon: var(--color-tampon);
+  --tampon-pale: var(--color-tampon-pale);
+  color-scheme: light;
+}
+
+/* Theme sombre. Le rouge de tampon s'eclaircit : a #9e2b16 sur fond sombre il
+   tombe sous le seuil de lisibilite, et un rouge qui porte du texte doit tenir
+   4,5:1, pas 3:1. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papier: #16140f;
+    --papier-creux: #1f1c16;
+    --encre: #ece7db;
+    --encre-pale: #a8a094;
+    --filet: #3a352c;
+    --tampon: #e8846c;
+    --tampon-pale: #2c1d18;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --papier: #16140f;
+  --papier-creux: #1f1c16;
+  --encre: #ece7db;
+  --encre-pale: #a8a094;
+  --filet: #3a352c;
+  --tampon: #e8846c;
+  --tampon-pale: #2c1d18;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--papier);
+  color: var(--encre);
+  font-family: var(--font-corps);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-titre);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Le filet horizontal qui separe deux annonces. C'est la seule separation du
+   systeme : ni carte, ni ombre, ni bordure arrondie. */
+.filet {
+  border-top: 1px solid var(--filet);
+}
+
+/* Cible tactile de 44 px minimum, imposee partout plutot que repetee. */
+button,
+a[role="button"],
+select,
+input[type="text"],
+input[type="search"] {
+  min-height: 44px;
+}
+
+/* La carte MapLibre en theme sombre reste lisible sans seconde feuille de
+   style : on desature legerement plutot que d'inverser, une carte inversee
+   devient illisible. Les deux etats du theme sont ecrits separement : une
+   @media ne peut pas figurer dans un selecteur groupe, et un CSS invalide est
+   ignore sans la moindre erreur. */
+:root[data-theme="dark"] .carte-fond {
+  filter: brightness(0.82) saturate(0.9);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .carte-fond {
+    filter: brightness(0.82) saturate(0.9);
+  }
+}
+
+.maplibregl-ctrl-attrib {
+  font-family: var(--font-corps);
+  font-size: 11px;
+}
