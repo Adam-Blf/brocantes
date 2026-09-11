@@ -151,3 +151,26 @@ synchronisees, fiche evenement. Jalon 3, pages de commune et referencement.
 Jalon 4, declaration par les organisateurs, moderation, alerte hebdomadaire.
 Jalon 5, mentions legales et politique de confidentialite, avec passage par
 l'agent juridique avant toute mise en ligne.
+
+## Un piege qui a coute une heure
+
+Sous Windows, `rm -rf .next` echoue **en silence** quand le serveur Next tient
+encore des fichiers ouverts, et `pkill -f next-server` ne trouve rien parce que
+le processus s'appelle `node`. Le serveur continue alors de servir des
+fragments de code perimes, en erreur 500 avec un type MIME `text/plain`, et des
+pages mises en cache avant la derniere modification des donnees.
+
+Les symptomes ne designent jamais la cause : une carte vide sans la moindre
+erreur, un composant bloque sur son message de chargement, une page qui affiche
+un evenement supprime de la base une heure plus tot. J'ai successivement
+soupconne le style vectoriel de l'IGN, la politique de securite et la taille du
+conteneur avant de trouver.
+
+**Le geste juste** : arreter le serveur par son port, jamais par son nom, puis
+`npm run rebuild`, qui echoue bruyamment si la suppression est incomplete au
+lieu de laisser croire qu'elle a eu lieu.
+
+```bash
+# Arreter ce qui tient le port 3000, puis reconstruire proprement
+npm run rebuild && npm run start
+```

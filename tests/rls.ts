@@ -48,15 +48,18 @@ function nbLignes(corps: unknown): number {
 console.log("\nGarde RLS, vue depuis la cle publique\n");
 
 // 1. Le chemin nominal doit fonctionner. Un test de fermeture n'a de valeur que
-//    si l'on prouve d'abord que la lecture legitime, elle, passe.
+//    si l'on prouve d'abord que la lecture legitime, elle, passe. On s'appuie
+//    sur les evenements REELS : un temoin publie, lui, apparaitrait sur la page
+//    publique de sa commune, ce qui est un artefact de test visible par les
+//    visiteurs.
 {
   const { statut, corps } = await lire(
-    "evenements?slug=eq.zzz-controle-publie&select=slug,statut",
+    "evenements?statut=eq.publie&select=slug&limit=5",
   );
   noter(
-    "un evenement publie est lisible",
-    statut === 200 && nbLignes(corps) === 1,
-    `HTTP ${statut}, ${nbLignes(corps)} ligne(s), attendu 1`,
+    "les evenements publies sont lisibles",
+    statut === 200 && nbLignes(corps) > 0,
+    `HTTP ${statut}, ${nbLignes(corps)} ligne(s), attendu au moins 1`,
   );
 }
 
@@ -106,9 +109,9 @@ for (const table of ["contributions", "alertes"]) {
 }
 
 // 6. La fonction publiee ne doit pas etre une porte derobee sur les brouillons.
-//    La fenetre de dates est elargie a dessein : les deux temoins sont dates en
-//    2099 pour ne jamais apparaitre dans une recherche reelle, il faut donc
-//    aller les chercher explicitement.
+//    La fenetre de dates est elargie a dessein : le temoin est date en 2099
+//    pour ne jamais apparaitre dans une recherche reelle, il faut donc aller
+//    le chercher explicitement.
 {
   const r = await fetch(`${URL_BASE}/rest/v1/rpc/recherche_evenements`, {
     method: "POST",
@@ -127,9 +130,7 @@ for (const table of ["contributions", "alertes"]) {
     : [];
   noter(
     "la recherche ne renvoie pas les brouillons",
-    r.status === 200 &&
-      slugs.includes("zzz-controle-publie") &&
-      !slugs.includes("zzz-controle-brouillon"),
+    r.status === 200 && !slugs.includes("zzz-controle-brouillon"),
     `HTTP ${r.status}, ${slugs.length} resultat(s), brouillon present : ${
       slugs.includes("zzz-controle-brouillon")
     }`,

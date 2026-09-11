@@ -1,5 +1,67 @@
 # Journal des versions
 
+## 0.3.0 - 11/09/2026
+
+Jalons 2 et 3 : l'interface et les pages de commune.
+
+### Ajoute
+
+- Site Next.js 16, App Router, TypeScript strict. Recherche par position ou par
+  commune, rayon, periode. Liste et carte synchronisees, liste par defaut sur
+  telephone. Fiche evenement avec bouton d'itineraire.
+- Les filtres vivent dans l'URL : une recherche se partage par copie du lien,
+  le retour arriere fonctionne, et le rendu reste serveur donc indexable.
+- 28 pages de commune prerendues, avec balisage schema.org `ItemList` de
+  `Event`, plan du site et `robots.txt`.
+- Recherche de commune en base : `chercher_commune` compare deux formes
+  normalisees, accents retires et apostrophes ramenees a des espaces. "l hay"
+  trouve L'Hay-les-Roses, "perreux" trouve Le Perreux-sur-Marne. La saisie ne
+  part chez aucun geocodeur tiers.
+- Direction artistique journal de petites annonces : Newsreader et Schibsted
+  Grotesk, rapatriees en local, aucun CDN a l'execution. Politique de securite
+  qui rend cette promesse verifiable plutot qu'affichee.
+- 17 tests unitaires, 8 parcours de bout en bout sur telephone et bureau,
+  6 captures en 390 px dans les deux themes.
+
+### Decisions
+
+- **Next 16 et non 15**, comme ecrit au cahier des charges : l'App Router y est
+  identique, et livrer sur une version deja depassee n'aurait servi personne.
+- **Pas de shadcn/ui.** Des composants concus pour un langage visuel generique
+  auraient combattu le registre demande. Les quelques elements necessaires,
+  boutons de filtre et listes, tiennent en moins de code que leur installation.
+- **Tuiles image IGN plutot que vectorielles.** Elles n'exigent ni fichier de
+  metadonnees, ni jeu de glyphes, ni planche de symboles : trois points de
+  defaillance en moins pour un fond un peu moins fin.
+- **Aucun horaire affiche** quand la source n'en publie pas, plutot qu'un
+  "00h00 - 23h59" qui aurait l'apparence d'une information.
+
+### Corrige
+
+- **Un temoin de test s'affichait sur la page publique de Chevilly-Larue.** La
+  garde RLS avait besoin d'un evenement publie, j'en avais cree un ; il
+  apparaissait donc aux visiteurs. Elle s'appuie desormais sur les evenements
+  reels, et ne garde en base que le temoin BROUILLON, qui lui n'a pas
+  d'equivalent : sans une ligne non publiee, "aucun brouillon ne sort"
+  passerait au vert sur une table qui n'en contient aucune.
+
+### Le piege qui a coute une heure
+
+Sous Windows, `rm -rf .next` echoue **en silence** quand le serveur tient encore
+des fichiers ouverts, et `pkill -f next-server` ne trouve rien parce que le
+processus s'appelle `node`. Le serveur sert alors des fragments de code perimes
+en erreur 500, et des pages mises en cache avant la derniere modification des
+donnees.
+
+Aucun symptome ne designait la cause : une carte vide sans la moindre erreur,
+un composant bloque sur son message de chargement, une page affichant un
+evenement supprime de la base une heure plus tot. Le style vectoriel de l'IGN,
+la politique de securite et la taille du conteneur ont ete successivement
+soupconnes a tort.
+
+`npm run rebuild` echoue maintenant bruyamment si la suppression est incomplete,
+au lieu de laisser croire qu'elle a eu lieu.
+
 ## 0.2.0 - 11/09/2026
 
 Comble l'ecart entre ce que la collecte rendait et ce qui existe reellement.

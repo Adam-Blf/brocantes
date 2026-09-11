@@ -16,3 +16,9 @@ collector/data/*.json
 *.log
 .DS_Store
 Thumbs.db
+
+# Artefacts de compilation et de test, tous regenerables.
+tsconfig.tsbuildinfo
+next-env.d.ts
+/test-results/
+/playwright-report/
