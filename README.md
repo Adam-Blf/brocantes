@@ -97,6 +97,15 @@ cp .env.example .env.local          # puis remplir
 deno check collector/collecte.ts    # verification des types
 ```
 
+Les cles partagees avec d'autres projets portent le prefixe `BROCANTES`
+(`BROCANTES_SUPABASE_URL`, `NEXT_PUBLIC_BROCANTES_SUPABASE_URL`), pour que chaque
+nom soit unique sur tous les projets. En local, `next.config.ts` (via
+`process.loadEnvFile`, Node 20.12+) et le collecteur (`collector/lib/env-central.ts`)
+chargent aussi `~/.secrets/projets.env` s'il existe, chemin surchargeable par
+`CENTRAL_ENV_FILE`. Une variable deja definie l'emporte, et en CI comme sur Vercel
+le fichier est absent, donc rien ne change. Le collecteur ne le lit que s'il a
+`--allow-read`.
+
 Le referentiel des communes se charge une fois, depuis `geo.api.gouv.fr`, en une
 requete par departement. Jamais commune par commune : 1 266 requetes pour un
 fichier qui se telecharge d'un bloc serait un gaspillage et une impolitesse.

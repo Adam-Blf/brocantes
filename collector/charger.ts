@@ -12,11 +12,17 @@
  *   deno run --allow-net=<hote> --allow-env --allow-read collector/charger.ts <fichier.json>
  */
 
-const URL_BASE = Deno.env.get("SUPABASE_URL");
+import { chargerEnvCentral } from "./lib/env-central.ts";
+
+// EN: local dev, read the central secrets file; CI keeps its own variables.
+// FR : en local, lit le fichier de secrets central ; la CI garde ses variables.
+chargerEnvCentral();
+
+const URL_BASE = Deno.env.get("BROCANTES_SUPABASE_URL");
 const CLE = Deno.env.get("SUPABASE_SERVICE_KEY");
 
 if (!URL_BASE || !CLE) {
-  console.error("SUPABASE_URL et SUPABASE_SERVICE_KEY sont requis.");
+  console.error("BROCANTES_SUPABASE_URL et SUPABASE_SERVICE_KEY sont requis.");
   Deno.exit(2);
 }
 
