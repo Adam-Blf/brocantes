@@ -1,5 +1,14 @@
 # Journal des versions
 
+## Non publie
+
+### Change
+
+- Les cles d'environnement partagees avec d'autres projets portent le prefixe
+  `BROCANTES` : `BROCANTES_SUPABASE_URL`, `NEXT_PUBLIC_BROCANTES_SUPABASE_URL`,
+  `BROCANTES_RESEND_API_KEY`. En local, le site et le collecteur chargent le
+  fichier central `~/.secrets/projets.env`.
+
 ## 0.3.0 - 11/09/2026
 
 Jalons 2 et 3 : l'interface et les pages de commune.
