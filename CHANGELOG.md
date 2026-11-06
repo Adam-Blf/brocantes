@@ -1,6 +1,16 @@
 # Journal des versions
 
-## Non publie
+Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions : [SemVer](https://semver.org/lang/fr/).
+
+## [0.3.1] - 2026-11-06
+
+### Ajoute
+
+- README vitrine : badges, etat a jour, architecture Mermaid aux couleurs par
+  role, commandes du site et table des variables d'environnement.
+- Licence MIT pour le code.
+- Workflow de release declenche par tag, qui verifie la version de
+  `package.json` et reprend la section du journal.
 
 ### Change
 
@@ -9,7 +19,7 @@
   `BROCANTES_RESEND_API_KEY`. En local, le site et le collecteur chargent le
   fichier central `~/.secrets/projets.env`.
 
-## 0.3.0 - 11/09/2026
+## [0.3.0] - 2026-09-11
 
 Jalons 2 et 3 : l'interface et les pages de commune.
 
@@ -71,7 +81,7 @@ soupconnes a tort.
 `npm run rebuild` echoue maintenant bruyamment si la suppression est incomplete,
 au lieu de laisser croire qu'elle a eu lieu.
 
-## 0.2.0 - 11/09/2026
+## [0.2.0] - 2026-09-11
 
 Comble l'ecart entre ce que la collecte rendait et ce qui existe reellement.
 
@@ -129,7 +139,7 @@ Comble l'ecart entre ce que la collecte rendait et ce qui existe reellement.
   lien exploitable, Ablon et Charenton n'exposent pas la fiche sur la page
   sondee.
 
-## 0.1.0 - 11/09/2026
+## [0.1.0] - 2026-09-11
 
 Jalon 1 : la chaine de collecte, branchee sur du reel.
 
