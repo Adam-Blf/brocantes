@@ -56,7 +56,7 @@ jobs:
 
       - name: Chargement en base
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          BROCANTES_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           dernier=$(ls -t collector/sortie/collecte-*.json | head -1)
@@ -64,7 +64,7 @@ jobs:
 
       - name: Garde RLS
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          BROCANTES_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: deno run --allow-net --allow-env tests/rls.ts
 

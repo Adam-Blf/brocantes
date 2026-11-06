@@ -1,4 +1,16 @@
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { NextConfig } from "next";
+
+// EN: local dev only. Load the central secrets file when it exists. Variables
+// already set win, and on Vercel the file is absent so this is a no-op.
+// FR : developpement local seulement. Charge le fichier de secrets central s'il
+// existe. Les variables deja definies l'emportent, et sur Vercel le fichier est
+// absent, donc rien ne se passe.
+const centralEnvFile =
+  process.env.CENTRAL_ENV_FILE ?? join(homedir(), ".secrets", "projets.env");
+if (existsSync(centralEnvFile)) process.loadEnvFile(centralEnvFile);
 
 const config: NextConfig = {
   reactStrictMode: true,

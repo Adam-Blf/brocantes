@@ -13,11 +13,11 @@ import { bornes, type Evenement, type Filtres } from "./types";
  */
 
 function config(): { url: string; cle: string } {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_BROCANTES_SUPABASE_URL;
   const cle = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !cle) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY sont requis.",
+      "NEXT_PUBLIC_BROCANTES_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY sont requis.",
     );
   }
   return { url, cle };
