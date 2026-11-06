@@ -1,12 +1,23 @@
 # brocantes
 
+<!-- adam-badges:start -->
+[![version](https://img.shields.io/badge/version-0.3.1-163767?style=flat-square)](CHANGELOG.md)
+[![commits](https://img.shields.io/github/commit-activity/t/Adam-Blf/brocantes?color=001329&label=commits&style=flat-square)](https://github.com/Adam-Blf/brocantes/commits)
+[![visites](https://hits.sh/github.com/Adam-Blf/brocantes.svg?style=flat-square&label=visites&color=001329)](https://hits.sh/github.com/Adam-Blf/brocantes/)
+[![last commit](https://img.shields.io/github/last-commit/Adam-Blf/brocantes?color=D4A437&style=flat-square&label=dernier%20push)](https://github.com/Adam-Blf/brocantes/commits)
+[![top language](https://img.shields.io/github/languages/top/Adam-Blf/brocantes?style=flat-square)](https://github.com/Adam-Blf/brocantes)
+[![license](https://img.shields.io/github/license/Adam-Blf/brocantes?style=flat-square&color=D4A437)](LICENSE)
+<!-- adam-badges:end -->
+
 Recense les brocantes et vide-greniers autour de chez vous, en Val-de-Marne et
 a Paris. Une seule question, une reponse en moins de cinq secondes : qu'est-ce
 qu'il y a ce week-end a moins de vingt kilometres, et comment j'y vais.
 
-Etat au 11/09/2026 : jalon 1 livre, la chaine de collecte tourne et ecrit du
-reel. **18 evenements publies**, issus de 11 sources, sur 33 sources branchees
-et 28 communes couvertes. L'interface n'existe pas encore.
+Etat en version 0.3.1 : jalons 1 a 3 livres. La chaine de collecte tourne
+chaque jour et ecrit du reel, **18 evenements publies** au 11/09/2026, issus de
+11 sources, sur 33 sources branchees et 28 communes couvertes. Le site Next.js
+porte la recherche par position ou par commune, la liste et la carte
+synchronisees, la fiche evenement et 28 pages de commune prerendues.
 
 ## Ce qu'il faut savoir avant de lire le code
 
@@ -59,12 +70,26 @@ flowchart LR
     CO[("communes<br/>1 266, referentiel INSEE")]
   end
 
-  W["app, Next.js<br/>a venir"]
+  W["site, Next.js<br/>recherche, carte, pages de commune"]
+  X["Ecarte et journalise<br/>pas une brocante, date deja passee"]
 
   T & R & I & HT & P --> H --> C --> D --> O --> L --> E
   L --> ES
   E -.->|"recherche_evenements<br/>ST_DWithin sur index GiST"| W
   S & CO --> W
+  C -.-> X
+  D -.-> X
+
+  classDef input fill:#2563eb,stroke:#1e3a8a,color:#fff
+  classDef process fill:#7c3aed,stroke:#4c1d95,color:#fff
+  classDef store fill:#f59e0b,stroke:#92400e,color:#111
+  classDef ok fill:#16a34a,stroke:#14532d,color:#fff
+  classDef error fill:#dc2626,stroke:#7f1d1d,color:#fff
+  class T,R,I,HT,P input
+  class H,C,D,O,L process
+  class E,S,ES,CO store
+  class W ok
+  class X error
 ```
 
 Le collecteur ne parle jamais au site, et le site ne parle jamais aux mairies.
@@ -92,10 +117,28 @@ sans rien casser, tant qu'il continue de nommer ses evenements en francais.
 
 ## Installation
 
+Prerequis : Node 20.12 ou plus pour le site, Deno 2 pour le collecteur, un
+projet Supabase avec les migrations de `supabase/migrations/` appliquees.
+
 ```bash
 cp .env.example .env.local          # puis remplir
-deno check collector/collecte.ts    # verification des types
+npm install
+npm run dev                         # site sur http://localhost:3000
+npm test                            # tests unitaires (Vitest)
+npm run test:e2e                    # parcours de bout en bout (Playwright)
+deno check collector/collecte.ts    # verification des types du collecteur
 ```
+
+### Variables d'environnement
+
+| Variable | Usage |
+|---|---|
+| `BROCANTES_SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Projet Supabase, cote collecteur et garde RLS. Cle publique, protegee par la RLS. |
+| `NEXT_PUBLIC_BROCANTES_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Memes valeurs, lues par le site dans le navigateur. |
+| `SUPABASE_SERVICE_KEY` | Vrai secret, contourne la RLS. Utilise seulement par `collector/charger.ts`. |
+| `BROCANTES_RESEND_API_KEY`, `COURRIEL_EXPEDITEUR` | Envoi des alertes par courriel. |
+| `URL_PUBLIQUE` | Adresse publique du service, reprise dans le user-agent du collecteur. |
+| `CENTRAL_ENV_FILE` | Facultatif, chemin du fichier de secrets central en local. |
 
 Les cles partagees avec d'autres projets portent le prefixe `BROCANTES`
 (`BROCANTES_SUPABASE_URL`, `NEXT_PUBLIC_BROCANTES_SUPABASE_URL`), pour que chaque
@@ -155,9 +198,8 @@ referencement et malhonnete pour le lecteur.
 
 ## Suite
 
-Jalon 2, l'interface : recherche par position ou code postal, liste et carte
-synchronisees, fiche evenement. Jalon 3, pages de commune et referencement.
-Jalon 4, declaration par les organisateurs, moderation, alerte hebdomadaire.
+Les jalons 2 et 3, l'interface puis les pages de commune et le referencement,
+sont livres en 0.3.0. Jalon 4, declaration par les organisateurs, moderation, alerte hebdomadaire.
 Jalon 5, mentions legales et politique de confidentialite, avec passage par
 l'agent juridique avant toute mise en ligne.
 
@@ -183,3 +225,10 @@ lieu de laisser croire qu'elle a eu lieu.
 # Arreter ce qui tient le port 3000, puis reconstruire proprement
 npm run rebuild && npm run start
 ```
+
+## Licence
+
+Code sous licence MIT, voir [LICENSE](LICENSE). Les donnees collectees restent
+sous le regime de leur source, publie source par source dans
+[docs/SOURCES.md](docs/SOURCES.md) : information publique des communes, et ODbL
+pour "Que faire a Paris".
